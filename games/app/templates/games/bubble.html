@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Shooter Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #000; /* Black background */
+            margin: 0; /* Remove default margin */
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: white; /* White text */
+            margin-bottom: 20px;
+        }
+        #gameCanvas {
+            border: 2px solid #fff; /* White border */
+            background-color: #222; /* Dark gray background for the game area */
+            position: relative;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .control-button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 1em;
+            background-color: #444; /* Dark gray button */
+            color: white; /* White text */
+            border: none; /* No border */
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+        .control-button:hover {
+            background-color: #666; /* Lighter gray on hover */
+        }
+        #scoreboard {
+            color: white; /* White text for scoreboard */
+            margin-top: 10px;
+        }
+        #gameOverScreen {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+            color: white; /* White text */
+            text-align: center;
+            padding-top: 200px; /* Center vertically */
+        }
+    </style>
+</head>
+<body>
+
+<h1>Bubble Shooter Game</h1>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<div class="controls">
+    <button class="control-button" onclick="shootBubble()">Shoot</button>
+</div>
+<div id="scoreboard">Score: 0 | High Score: 0</div>
+<div id="gameOverScreen">
+    <h2>Game Over!</h2>
+    <p>Your Score: <span id="finalScore">0</span></p>
+    <p>High Score: <span id="highScoreDisplay">0</span></p>
+    <button class="control-button" onclick="restartGame()">Replay</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const bubbleRadius = 20; // Radius of the bubbles
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+
+    // Array to hold bubbles
+    let bubbles = [];
+    
+    // Current bubble being shot
+    let currentBubble = { x: canvas.width / 2, y: canvas.height - bubbleRadius - 10, color: getRandomColor() };
+
+    function getRandomColor() {
+        const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function drawBubbles() {
+        for (let bubble of bubbles) {
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, bubbleRadius, 0, Math.PI * 2);
+            ctx.fillStyle = bubble.color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+        }
+    }
+
+    function drawCurrentBubble() {
+        ctx.beginPath();
+        ctx.arc(currentBubble.x, currentBubble.y, bubbleRadius, 0, Math.PI * 2);
+        ctx.fillStyle = currentBubble.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+        
+        // Draw aiming line
+        ctx.beginPath();
+        ctx.moveTo(currentBubble.x, currentBubble.y);
+        ctx.lineTo(currentBubble.x, -50); // Draw line upwards
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function shootBubble() {
+        const angle = Math.atan2(canvas.height - bubbleRadius - currentBubble.y, currentBubble.x - canvas.width / 2);
+        
+        const newBubble = { x: currentBubble.x, y: currentBubble.y, color: currentBubble.color };
+        
+        const interval = setInterval(() => {
+            newBubble.y -= 5; // Move the bubble up
+
+            // Check for collision with other bubbles
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                if (checkCollision(newBubble, bubbles[i])) {
+                    bubbles.push(newBubble); // Add to bubbles array
+                    checkForMatches(newBubble); // Check for matches
+                    clearInterval(interval);
+                    currentBubble.color = getRandomColor(); // Get a new random color for the next bubble
+                    return;
+                }
+            }
+
+            if (newBubble.y < -bubbleRadius) { // If the bubble goes off screen
+                clearInterval(interval);
+                return;
+            }
+
+            draw(); // Redraw the game
+            drawCurrentBubble(); // Draw the current bubble being shot
+
+        }, 100);
+    }
+
+    function checkCollision(bubble1, bubble2) {
+        const dx = bubble1.x - bubble2.x;
+        const dy = bubble1.y - bubble2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        return distance < (bubbleRadius * 2); // Collision detection based on radius
+    }
+
+    function checkForMatches(bubble) {
+        const toRemove = [];
+
+        for (let i = 0; i < bubbles.length; i++) {
+            if (bubbles[i].color === bubble.color) {
+                toRemove.push(i);
+                score++;
+                document.getElementById('scoreboard').innerText = "Score: " + score + " | High Score: " + highScore;
+
+                // Check adjacent bubbles for matching colors
+                checkAdjacentBubbles(bubbles[i], toRemove);
+                
+                if (toRemove.length >= 3) { // If three or more are matched
+                    break; // Stop checking further
+                }
+            }
+        }
+
+        // Remove matched bubbles from the array
+        for (let i = toRemove.length - 1; i >= 0; i--) {
+            bubbles.splice(toRemove[i], 1);
+        }
+
+        if (bubbles.length === 0) { // Check if all bubbles are cleared
+            gameOver(); // Trigger game over
+        }
+    }
+
+    function checkAdjacentBubbles(bubble, toRemove) {
+        for (let j = 0; j < bubbles.length; j++) {
+            if (toRemove.includes(j)) continue;
+
+            const dx = Math.abs(bubble.x - bubbles[j].x);
+            const dy = Math.abs(bubble.y - bubbles[j].y);
+
+            if (dx <= bubbleRadius && dy <= bubbleRadius) { // Simple proximity check
+                toRemove.push(j); // Add to remove list
+                checkAdjacentBubbles(bubbles[j], toRemove); // Recursively check adjacent bubbles
+                break; // Break to avoid infinite loop
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+        drawBubbles();
+        
+        drawCurrentBubble(); // Draw the current bubble being shot
+    }
+
+    function gameOver() {
+        if (score > highScore) {
+            highScore = score; // Update high score
+            localStorage.setItem('highScore', highScore); // Save high score to local storage
+        }
+        
+        document.getElementById('finalScore').innerText = score;
+        document.getElementById('highScoreDisplay').innerText = highScore;
+
+        document.getElementById('gameOverScreen').style.display = 'block'; // Show game over screen
+    }
+
+    function restartGame() {
+        score = 0;
+        bubbles = [];
+        
+        document.getElementById('scoreboard').innerText = "Score: " + score + " | High Score: " + highScore;
+
+        document.getElementById('gameOverScreen').style.display = 'none'; // Hide game over screen
+        
+        draw(); // Restart the game loop
+
+		// Initialize rows of colored balls at the top of the canvas.
+		for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+			for (let colIndex = 0; colIndex < canvas.width / (bubbleRadius * 2); colIndex++) {
+				bubbles.push({
+					x: colIndex * (bubbleRadius * 2) + bubbleRadius,
+					y: rowIndex * (bubbleRadius * 2) + bubbleRadius,
+					color: getRandomColor()
+				});
+			}
+		}
+		
+		draw(); 
+	}
+
+	// Initialize rows of colored balls at the top of the canvas.
+	for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+		for (let colIndex = 0; colIndex < canvas.width / (bubbleRadius * 2); colIndex++) {
+			bubbles.push({
+				x: colIndex * (bubbleRadius * 2) + bubbleRadius,
+				y: rowIndex * (bubbleRadius * 2) + bubbleRadius,
+				color: getRandomColor()
+			});
+		}
+	}
+
+	draw(); // Start the game loop
+
+</script>
+
+</body>
+</html>

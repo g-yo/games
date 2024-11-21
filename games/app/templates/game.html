@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game List</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f8f9fa; /* Light background */
+        }
+
+        h1 {
+            color: #343a40; /* Dark text */
+            margin-bottom: 30px;
+        }
+
+        .game-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-item {
+            margin: 10px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 150px;
+            cursor: pointer;
+            text-align: center;
+            background-color: white; /* White background for each game item */
+            transition: transform 0.2s, background-color 0.2s; /* Transition effects */
+        }
+
+        .game-item a {
+            text-decoration: none;
+            color: #007bff; /* Bootstrap primary color */
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .game-item:hover {
+            background-color: #e9ecef; /* Light gray on hover */
+            transform: scale(1.05); /* Slightly enlarge on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>Game List</h1>
+    <div class="game-list">
+        <div class="game-item">
+            <a href="{% url 'racing_game' %}">Racing Game</a>
+        </div>
+        <div class="game-item">
+            <a href="{% url 'snake_game' %}">Snake Game</a>
+        </div>
+        <div class="game-item">
+            <a href="{% url 'race_game' %}">Race Game</a>
+        </div>
+        <div class="game-item">
+            <a href="{% url 'bubble_game' %}">Bubble Shooter</a>
+        </div>
+        <!-- Add more games here -->
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

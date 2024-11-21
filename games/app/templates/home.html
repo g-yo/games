@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Home</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #282c34; /* Dark background */
+            color: white; /* White text */
+            font-family: 'Arial', sans-serif;
+        }
+        h1 {
+            font-size: 3em;
+            transition: transform 0.5s ease-in-out; /* Transition effect */
+        }
+        h1:hover {
+            transform: scale(1.1); /* Scale effect on hover */
+        }
+        .start-button {
+            display: none; /* Initially hidden */
+            margin-top: 20px;
+            transition: opacity 0.5s ease-in-out; /* Fade in effect */
+        }
+        .start-button.show {
+            display: block; /* Show when class is added */
+            opacity: 1; /* Fully visible */
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="gameTitle">Welcome to <span style="color: #ffcc00;">fifunzzz</span></h1>
+    <a href="{% url 'game' %}"n class="btn btn-primary start-button" id="startGameButton">Start Game</a>
+
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Show the Start Game button after a delay
+        window.onload = function() {
+            setTimeout(() => {
+                const startButton = document.getElementById('startGameButton');
+                startButton.classList.add('show'); // Add class to show button
+                startButton.style.opacity = 1; // Make it visible
+            }, 1000); // Delay of 1 second
+        };
+
+        // Redirect to game page (replace '#' with your game URL)
+        document.getElementById('startGameButton').addEventListener('click', function() {
+            window.location.href = '#'; // Replace '#' with your actual game URL
+        });
+    </script>
+
+</body>
+</html>

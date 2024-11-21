@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Racing Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #000; /* Black background */
+            margin: 0; /* Remove default margin */
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: white; /* White text */
+            margin-bottom: 20px;
+        }
+        #gameCanvas {
+            border: 2px solid #fff; /* White border */
+            background-color: #222; /* Dark gray background for the game area */
+            position: relative;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .control-button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 1em;
+            background-color: #444; /* Dark gray button */
+            color: white; /* White text */
+            border: none; /* No border */
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+        .control-button:hover {
+            background-color: #666; /* Lighter gray on hover */
+        }
+        #scoreboard {
+            color: white; /* White text for scoreboard */
+            margin-top: 10px;
+        }
+        #gameOverScreen {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+            color: white; /* White text */
+            text-align: center;
+            padding-top: 200px; /* Center vertically */
+        }
+    </style>
+</head>
+<body>
+
+<h1>Car Racing Game</h1>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<div class="controls">
+    <button class="control-button" onclick="moveLeft()">←</button>
+    <button class="control-button" onclick="moveRight()">→</button>
+</div>
+<div id="scoreboard">Score: 0 | High Score: 0</div>
+<div id="gameOverScreen">
+    <h2>Game Over!</h2>
+    <p>Your Score: <span id="finalScore">0</span></p>
+    <p>High Score: <span id="highScoreDisplay">0</span></p>
+    <button class="control-button" onclick="restartGame()">Replay</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const carWidth = 40;
+    const carHeight = 70;
+    let carX = (canvas.width - carWidth) / 2; // Start in the middle
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+
+    // Array to hold obstacles
+    let obstacles = [];
+    
+    // Speed of obstacles
+    let obstacleSpeed = 3;
+
+    function drawCenterLine() {
+        ctx.setLineDash([20, 20]); // Dashed line
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
+    }
+
+    function drawCar() {
+        ctx.font = "50px Arial"; // Set font size for emoji
+        ctx.fillText("🚗", carX, canvas.height - carHeight - 10); // Draw car emoji facing down
+    }
+
+    function drawObstacles() {
+        for (let obstacle of obstacles) {
+            ctx.fillStyle = obstacle.color; // Obstacle color
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+    }
+
+    function createObstacle() {
+        const obstacleWidth = Math.random() * (canvas.width / 2) + 20; // Random width
+        const obstacleX = Math.random() < 0.5 ? (canvas.width / 4 - obstacleWidth / 2) : (canvas.width * (3/4) - obstacleWidth / 2); // Position on either side
+        obstacles.push({ x: obstacleX, y: -carHeight, width: obstacleWidth, height: carHeight, color: 'red' });
+    }
+
+    function moveObstacles() {
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacleSpeed; // Move downwards
+
+            // Check for collision with the car
+            if (obstacles[i].y + obstacles[i].height > canvas.height - carHeight - 10 &&
+                obstacles[i].x < carX + carWidth &&
+                obstacles[i].x + obstacles[i].width > carX) {
+                gameOver(); // Trigger game over
+                return;
+            }
+
+            // Remove off-screen obstacles and increase score
+            if (obstacles[i].y > canvas.height) {
+                obstacles.splice(i, 1); // Remove obstacle
+                score++;
+                document.getElementById('scoreboard').innerText = "Score: " + score + " | High Score: " + highScore;
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+        drawCenterLine();
+        drawCar();
+        drawObstacles();
+        moveObstacles();
+        
+        requestAnimationFrame(draw); // Request next frame
+    }
+
+    function moveLeft() {
+        if (carX > canvas.width / 4) { // Prevent moving out of bounds on left side
+            carX -= 15; // Move left
+        }
+    }
+
+    function moveRight() {
+        if (carX < canvas.width * (3/4) - carWidth) { // Prevent moving out of bounds on right side
+            carX += 15; // Move right
+        }
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') moveLeft();
+        if (event.key === 'ArrowRight') moveRight();
+    });
+
+    function gameOver() {
+        if (score > highScore) {
+            highScore = score; // Update high score
+            localStorage.setItem('highScore', highScore); // Save high score to local storage
+        }
+        
+        document.getElementById('finalScore').innerText = score;
+        document.getElementById('highScoreDisplay').innerText = highScore;
+        
+        document.getElementById('gameOverScreen').style.display = 'block'; // Show game over screen
+        cancelAnimationFrame(draw); // Stop the game loop
+    }
+
+    function restartGame() {
+        score = 0;
+        obstacles = [];
+        
+        document.getElementById('scoreboard').innerText = "Score: " + score + " | High Score: " + highScore;
+
+        obstacleSpeed = 3; // Reset speed after restart
+        
+        document.getElementById('gameOverScreen').style.display = 'none'; // Hide game over screen
+        
+        draw(); // Restart the game loop
+    }
+
+    setInterval(createObstacle, 1000); // Create an obstacle every second
+
+    draw(); // Start the game loop
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000; /* Black background */
+            color: #fff; /* Default text color */
+            margin: 0; /* Remove default margin */
+        }
+        h1 {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.5);
+            color: blue; /* Blue heading */
+        }
+        #game {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Use fractional units for responsiveness */
+            gap: 5px;
+            width: 90vw; /* Set width to a percentage of the viewport */
+            max-width: 400px; /* Maximum width for larger screens */
+        }
+        .cell {
+            width: 100%; /* Full width of the grid cell */
+            height: 100px; /* Fixed height for cells */
+            background-color: #fff; /* White cells */
+            border: 2px solid #333; /* Dark border */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+        }
+        .cell:hover {
+            background-color: #e0e0e0; /* Light gray on hover */
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 1.5em;
+        }
+        .win-message {
+            color: red; /* Red for win message */
+        }
+        .draw-message {
+            color: yellow; /* Yellow for draw message */
+        }
+        #playAgainButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: blue; /* Button background color */
+            color: white; /* Button text color */
+            border: none; /* No border */
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+        #playAgainButton:hover {
+            background-color: darkblue; /* Darker blue on hover */
+        }
+        #scoreboard {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.5em; /* Smaller heading on mobile */
+                margin-bottom: 15px;
+            }
+            .cell {
+                height: 80px; /* Adjust cell height for smaller screens */
+                font-size: 1.5em; /* Smaller font size for symbols */
+                border-width: 1px; /* Thinner borders on mobile */
+            }
+        }
+
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 2em; /* Even smaller heading on very small screens */
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Tic Tac Toe</h1>
+<div id="game"></div>
+<div id="status"></div>
+<button id="playAgainButton" style="display:none;">Play Again</button>
+<div id="scoreboard">
+    <p>Score:</p>
+    <p>X: <span id="scoreX">0</span></p>
+    <p>O: <span id="scoreO">0</span></p>
+</div>
+
+<!-- Add audio element for click sound -->
+<audio id="clickSound" src="click-sound.mp3"></audio>
+
+<script>
+    const game = document.getElementById('game');
+    const statusDisplay = document.getElementById('status');
+    const playAgainButton = document.getElementById('playAgainButton');
+    const scoreXDisplay = document.getElementById('scoreX');
+    const scoreODisplay = document.getElementById('scoreO');
+    const clickSound = document.getElementById('clickSound'); // Get the audio element
+
+    let board = ['', '', '', '', '', '', '', '', ''];
+    let currentPlayer = 'X';
+    let isGameActive = true;
+
+    let scoreX = 0; // Score for player X
+    let scoreO = 0; // Score for player O
+
+    const winningConditions = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+
+    function createBoard() {
+        board.forEach((cellValue, index) => {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.innerText = cellValue; // Display the current value
+            cell.addEventListener('click', () => handleCellClick(index));
+            game.appendChild(cell);
+        });
+    }
+
+    function handleCellClick(index) {
+        if (board[index] !== '' || !isGameActive) {
+            return;
+        }
+
+        clickSound.play(); // Play click sound
+        
+        board[index] = currentPlayer; // Update the board
+        renderBoard(); // Render the updated board
+        checkResult(); // Check for a win or draw
+    }
+
+    function renderBoard() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            cell.innerHTML = board[index] === 'X' ? '<span style="color:black;">X</span>' : 
+                            board[index] === 'O' ? '<span style="color:black;">O</span>' : '';
+        });
+    }
+
+    function checkResult() {
+        let roundWon = false;
+
+        for (let i = 0; i < winningConditions.length; i++) {
+            const [a, b, c] = winningConditions[i];
+            if (board[a] === '' || board[b] === '' || board[c] === '') {
+                continue;
+            }
+            if (board[a] === board[b] && board[a] === board[c]) {
+                roundWon = true;
+                break;
+            }
+        }
+
+        if (roundWon) {
+            statusDisplay.innerHTML = `<span class="win-message">Player ${currentPlayer} has won!</span>`;
+            
+            // Update scores
+            if (currentPlayer === 'X') {
+                scoreX++;
+                scoreXDisplay.innerText = scoreX;
+            } else {
+                scoreO++;
+                scoreODisplay.innerText = scoreO;
+            }
+
+            isGameActive = false;
+            playAgainButton.style.display = 'block'; // Show Play Again button
+            return;
+        }
+
+        if (!board.includes('')) {
+            statusDisplay.innerHTML = '<span class="draw-message">It\'s a draw!</span>';
+            isGameActive = false;
+            playAgainButton.style.display = 'block'; // Show Play Again button
+            return;
+        }
+
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; // Switch players
+    }
+
+    function resetGame() {
+        board = ['', '', '', '', '', '', '', '', ''];
+        currentPlayer = 'X';
+        isGameActive = true;
+
+        statusDisplay.innerHTML = '';
+        playAgainButton.style.display = 'none'; // Hide Play Again button
+        game.innerHTML = ''; // Clear the game board
+        createBoard(); // Recreate the game board
+    }
+
+    playAgainButton.addEventListener('click', resetGame); // Reset game on button click
+
+    createBoard(); // Initialize the game
+</script>
+
+</body>
+</html>
